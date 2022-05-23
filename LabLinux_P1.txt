@@ -1,0 +1,480 @@
+#23-May-2022
+#this project implementation was build on shell Scripting in linux 
+# STUDENT RECORD SYSTEM 
+
+#reading the file name
+echo "please enter the file name:"
+read file
+#check if the file exists
+if [ ! -e "$file" ]; then
+	echo "File does not exist"
+	exit 1
+fi
+i=0
+k=0
+
+declare -A cg
+
+#reading line by line
+while read line; do
+
+	#assign the values to the correct variables
+	year[$i]=$(cut -d';' -f1 <<< "$line") 
+	sem[$i]=$(cut -d'/' -f2 <<< "${year[$i]}")
+	if [ $((sem[$i])) -lt 1 -o $((sem[$i])) -gt 3 ]; then
+		echo "semester can't be other than 1, 2, or 3!"
+		echo "update your file!"
+		exit 1
+	fi
+	year[$i]=$(cut -d'/' -f1 <<< "${year[$i]}")
+	cg[$i]=$(cut -d';' -f2 <<< "$line")
+	
+	i=$((i+1))
+
+done < $file
+
+while true
+do
+	#ask user to choose from menu
+	
+	echo "*******************************************************"
+	echo "1. print all student records of all semesters"
+	echo "2. print student record for a specific semester"
+	echo "3. print the overall average"
+	echo "4. print the average for each semester"
+	echo "5. print the total number of passed hours"
+	echo "6. print the percentage of of passed to failed hours"
+	echo "7. print the total hours passed in each semester"
+	echo "8. print the number of all taken courses"
+	echo "9. print the total number of taken labs"
+	echo "10. insert a new semester"
+	echo "11. change a course grade"
+	echo "12. quit by entering -1"
+	echo "*******************************************************"
+	
+	choice=0
+	read choice
+	
+	while [ $((choice)) -lt 1 -o $((choice)) -gt 11 ]
+	do
+		echo "***************************************"
+		echo "the input should be between 1 and 11"
+		echo "enter -1 to exit"
+		echo "***************************************"
+		read choice
+		if [  $((choice)) -eq -1 ]; then
+			exit 1
+		fi
+	
+	done
+	
+	if [  $((choice)) -eq 1 ]
+	then
+		for ((j=0;j<i;j++))
+		do
+			echo "year: ${year[$j]} semester: ${sem[$j]}"
+			echo "courses:"
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					echo $str
+				done
+		done
+		echo "*******************************************************"
+		echo ""
+		
+	elif [  $((choice)) -eq 2 ]
+	then
+	
+		flag=0
+		echo "enter the year of the semester: "
+		read y
+		echo "please enter the semester number:"
+		read s
+		while [ $((s)) -lt 1 -o $((s)) -gt 3 ]
+		do
+			echo "semester can't be other than 1, 2, or 3!"
+			echo "try again"
+			read s
+		done
+
+		for ((j=0;j<i;j++))
+		do
+			if [[ "${year[$j]}" == "$y" && "$s" == "${sem[$j]}" ]]
+			then
+			
+			echo "year: ${year[$j]} semester: ${sem[$j]}"
+			echo "courses:"
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					echo $str
+				done
+				flag=1
+			fi	
+		done
+		if [[ $((flag)) -eq 0 ]]
+		then
+			echo "the year or semester doesn't exist"
+		fi
+		
+		echo "*******************************************************"
+		echo ""
+		
+	elif [  $((choice)) -eq 3 ]
+	then	
+		num=0
+		sum=0
+		for ((j=0;j<i;j++))
+		do
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					
+					tmp2=$(cut -d' ' -f3 <<< "$str")
+					tmp2=$(tr -d ' ' <<< "$tmp2")
+					if [[ "$tmp2" == "FA" ]]
+					then
+						tmp2="50"
+					elif [[ "$tmp2" == "I" ]]
+					then
+						tmp2="0"
+						num=$((num-1))
+						
+					elif [[ "tmp2" == "F" ]]
+					then
+						tmp2="55"
+					fi
+					sum=$(($((tmp2))+sum))
+					num=$((num+1))
+				done
+		done
+		avg=$((sum/num))
+		echo "the average is: $avg"
+		
+		echo "*******************************************************"
+		echo ""
+		
+	elif [  $((choice)) -eq 4 ]
+	then	
+		
+		for ((j=0;j<i;j++))
+		do
+			
+			echo "year: ${year[$j]} semester: ${sem[$j]}"
+			num=0
+			sum=0
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					tmp2=$(cut -d' ' -f3 <<< "$str")
+					tmp2=$(tr -d ' ' <<< "$tmp2")
+					if [[ "$tmp2" == "FA" ]]
+					then
+						tmp2="50"
+					elif [[ "$tmp2" == "I" ]]
+					then
+						tmp2="0"
+						num=$((num-1))
+						
+					elif [[ "tmp2" == "F" ]]
+					then
+						tmp2="55"
+					fi
+					sum=$(($((tmp2))+sum))
+					num=$((num+1))
+				done
+				flag=1
+			echo "the average: $((sum/num))"		
+		done
+		echo "*******************************************************"
+		echo ""
+	
+	elif [  $((choice)) -eq 5 ]
+	then	
+		num=0
+		for ((j=0;j<i;j++))
+		do
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					tmp3=$(cut -d' ' -f2 <<< "$str")
+					tmp3=$(tr -d ' ' <<< "$tmp3")
+					tmp3=$(cut -c 6 <<< "$tmp3")
+					tmp2=$(cut -d' ' -f3 <<< "$str")
+					tmp2=$(tr -d ' ' <<< "$tmp2")
+					if [[ "$tmp2" == "FA" ]]
+					then
+						continue
+					elif [[ "$tmp2" == "I" ]]
+					then
+						continue
+						
+					elif [[ "tmp2" == "F" ]]
+					then
+						continue
+					fi
+					num=$(($((tmp3))+num))
+				done
+		done
+		echo "the number of total passed hours: $num"
+		
+		echo "*******************************************************"
+		echo ""
+		
+	elif [  $((choice)) -eq 6 ]
+	then	
+		num=0
+		fnum=0
+		for ((j=0;j<i;j++))
+		do
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					tmp3=$(cut -d' ' -f2 <<< "$str")
+					tmp3=$(tr -d ' ' <<< "$tmp3")
+					tmp3=$(cut -c 6 <<< "$tmp3")
+					tmp2=$(cut -d' ' -f3 <<< "$str")
+					tmp2=$(tr -d ' ' <<< "$tmp2")
+					if [[ "$tmp2" == "FA" ]]
+					then
+						fnum=$(($((tmp3))+fnum))
+					elif [[ "$tmp2" == "I" ]]
+					then
+						fnum=$(($((tmp3))+fnum))
+						
+					elif [[ "tmp2" == "F" ]]
+					then
+						fnum=$(($((tmp3))+fnum))
+					else
+						num=$(($((tmp3))+num))
+					fi
+				done
+		done
+		total=$((fnum+num))
+		num=$((num*100))
+		echo "the percentage of passed to failed hours: $((num/total))%"
+		echo "*******************************************************"
+		echo ""
+	
+	elif [  $((choice)) -eq 7 ]
+	then	
+		
+		for ((j=0;j<i;j++))
+		do
+			
+			num=0
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					tmp3=$(cut -d' ' -f2 <<< "$str")
+					tmp3=$(tr -d ' ' <<< "$tmp3")
+					tmp3=$(cut -c 6 <<< "$tmp3")
+					tmp2=$(cut -d' ' -f3 <<< "$str")
+					tmp2=$(tr -d ' ' <<< "$tmp2")
+					if [[ "$tmp2" == "FA" ]]
+					then
+						continue
+					elif [[ "$tmp2" == "I" ]]
+					then
+						continue
+						
+					elif [[ "tmp2" == "F" ]]
+					then
+						continue
+					fi
+					num=$(($((tmp3))+num))
+				done
+			echo "the number of total passed hours in ${year[@]}/${sem[@]}: $num"
+		done
+		echo "*******************************************************"
+		echo ""
+		
+	elif [  $((choice)) -eq 8 ]
+	then
+		num=0
+		for ((j=0;j<i;j++))
+		do
+	
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					num=$((num+1))
+				done
+		
+		done
+		echo "the total number of taken courses: $num"
+	
+	elif [  $((choice)) -eq 9 ]
+	then	
+		num=0
+		for ((j=0;j<i;j++))
+		do
+			IFS="," read -r -a arr <<< "${cg[$j]}"
+				for str in "${arr[@]}"
+				do
+					tmp3=$(cut -d' ' -f2 <<< "$str")
+					tmp3=$(tr -d ' ' <<< "$tmp3")
+					tmp3=$(cut -c 6 <<< "$tmp3")
+					echo $tmp3
+					if [[ $((tmp3)) -eq 1 ]]
+					then
+						num=$((num+1))
+					fi
+				done
+		done
+		echo "the number of total labs taken: $num labs"
+		echo "*******************************************************"
+		echo ""
+	
+	elif [  $((choice)) -eq 10 ]
+	then
+	
+		flag=0
+		echo "enter the year of the semester(YYYY-YYYY): "
+		read y
+		num1=$(cut -d'-' -f1 <<< "$y")
+		num2=$(cut -d'-' -f2 <<< "$y")
+		while [[ $(($((num1))+$((num2)))) -lt 4030 || $(($((num1))+$((num2)))) -gt 4050 ]]
+		do
+			echo "the year is not logical"
+			echo "please try again(to exit enter 0)"
+			read y
+			num1=$(cut -d'-' -f1 <<< "$y")
+			num2=$(cut -d'-' -f2 <<< "$y")
+			if [[ "$y" == "0" ]]
+			then
+				flag=1
+				break
+			fi
+		done
+		if [[ $((flag)) -eq 1 ]]
+		then
+			break
+		fi
+		
+		echo "please enter the semester number:"
+		read s
+		while [ $((s)) -lt 1 -o $((s)) -gt 3 ]
+		do
+			echo "semester can't be other than 1, 2, or 3!"
+			echo "try again"
+			read s
+		done
+
+		input="AA"
+		tmp4=" "
+		flag=0
+		while [[ "$input" != "0" ]]
+		do
+			
+			echo "please enter the course followed by the grade(eg. ENCS2322 90): "
+			echo "or to stop adding grades enter 0"
+			read input
+			if [[ $((flag)) -eq 1 && "$input" != "0" ]]
+			then
+				tmp4+=", "
+			fi
+			flag=1
+			if [[ "$input" != "0" ]]
+			then
+				tmp4+=$input
+				
+			fi
+		done
+		year[$i]="$y"
+		sem[$i]="$s"
+		cg[$i]="$tmp4"
+		echo "added succesfuly"
+		echo "*******************************************************"
+		echo ""
+		i=$((i+1))
+		
+	elif [  $((choice)) -eq 11 ]
+	then
+	
+		flag=0
+		echo "enter the year of the semester: "
+		read y
+		echo "please enter the semester number:"
+		read s
+		while [ $((s)) -lt 1 -o $((s)) -gt 3 ]
+		do
+			echo "semester can't be other than 1, 2, or 3!"
+			echo "try again"
+			read s
+		done
+
+		for ((j=0;j<i;j++))
+		do
+			if [[ "${year[$j]}" == "$y" && "$s" == "${sem[$j]}" ]]
+			then
+			
+				flag=1
+				break
+			fi	
+		done
+		if [[ $((flag)) -eq 0 ]]
+		then
+			echo "the year or semester doesn't exist"
+			continue
+		fi
+		
+		echo "please enter the course you want to change with the old grade:"
+		echo "format: (course-name grade)"
+		read old
+		
+		if [[ "${cg[$j]}" == *"$old"* ]]
+		then
+			
+			echo "please enter the course you want to change with the new grade:"
+			echo "format: (course-name grade)"
+			read sub
+			
+			cg[$j]=${cg[$j]/"$old"/"$sub"}
+		fi
+		echo "*******************************************************"
+		echo ""
+	
+	else
+		exit 1
+	fi
+
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
